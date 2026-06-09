@@ -16,9 +16,14 @@ const bookingRoutes = require("./routes/bookingRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const docsRoutes = require("./routes/docsRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
+const serviceOrderRoutes = require("./routes/serviceOrderRoutes");
 const { sendSuccess } = require("./utils/response");
 
 const app = express();
+const allowedCorsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const boot = Promise.all([
   userRepository.seedRoles(),
@@ -28,7 +33,12 @@ const boot = Promise.all([
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin(origin, callback) {
+      if (!origin || allowedCorsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Origin tidak diizinkan oleh CORS"));
+    },
     credentials: true,
   })
 );
@@ -53,6 +63,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/public", publicCatalogRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/service-orders", serviceOrderRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api", adminMasterRoutes);
 

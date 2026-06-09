@@ -2,9 +2,9 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "0.8.0",
+    version: "1.0.0",
     description:
-      "API contract untuk auth, public catalog, customer area, booking service, dan admin dashboard.",
+      "API contract untuk auth, public catalog, customer area, booking, service order, dan admin dashboard.",
   },
   servers: [{ url: "/api", description: "Current API host" }],
   tags: [
@@ -13,6 +13,8 @@ const openApiSpec = {
     { name: "Public Catalog" },
     { name: "Customer" },
     { name: "Booking" },
+    { name: "Service Order" },
+    { name: "Inventory" },
     { name: "Admin Dashboard" },
     { name: "Master Data" },
   ],
@@ -107,6 +109,93 @@ const openApiSpec = {
       BookingCancelRequest: {
         type: "object",
         properties: { reason: { type: "string" } },
+      },
+      ServiceOrderRequest: {
+        type: "object",
+        required: ["customerId", "vehicleId", "customerComplaint"],
+        properties: {
+          customerId: { type: "string" },
+          vehicleId: { type: "string" },
+          serviceCatalogId: { type: "string" },
+          mechanicId: { type: "string" },
+          customerComplaint: { type: "string", minLength: 5 },
+          initialDiagnosis: { type: "string" },
+          mileageIn: { type: "integer" },
+          estimatedFinishedAt: { type: "string", format: "date-time" },
+        },
+      },
+      ServiceOrderStatusRequest: {
+        type: "object",
+        required: ["status"],
+        properties: {
+          status: {
+            type: "string",
+            enum: [
+              "WAITING",
+              "CHECKED_IN",
+              "DIAGNOSIS",
+              "WAITING_APPROVAL",
+              "IN_PROGRESS",
+              "WAITING_SPAREPART",
+              "QUALITY_CHECK",
+              "READY_TO_PICKUP",
+              "COMPLETED",
+              "CANCELLED",
+            ],
+          },
+        },
+      },
+      AssignMechanicRequest: {
+        type: "object",
+        required: ["mechanicId"],
+        properties: { mechanicId: { type: "string" } },
+      },
+      ServiceOrderServiceItemRequest: {
+        type: "object",
+        required: ["serviceCatalogId"],
+        properties: {
+          serviceCatalogId: { type: "string" },
+          quantity: { type: "integer", minimum: 1, default: 1 },
+        },
+      },
+      ServiceOrderSparepartItemRequest: {
+        type: "object",
+        required: ["sparepartId"],
+        properties: {
+          sparepartId: { type: "string" },
+          quantity: { type: "integer", minimum: 1, default: 1 },
+        },
+      },
+      ServiceOrderNoteRequest: {
+        type: "object",
+        required: ["note"],
+        properties: {
+          note: { type: "string" },
+          visibility: { type: "string", enum: ["INTERNAL", "CUSTOMER_VISIBLE"] },
+        },
+      },
+      ServiceOrderPhotoRequest: {
+        type: "object",
+        required: ["url"],
+        properties: {
+          url: { type: "string", format: "uri" },
+          caption: { type: "string" },
+          visibility: { type: "string", enum: ["INTERNAL", "CUSTOMER_VISIBLE"] },
+        },
+      },
+      StockAdjustmentRequest: {
+        type: "object",
+        required: ["type", "quantity"],
+        properties: {
+          type: { type: "string", enum: ["IN", "OUT", "ADJUSTMENT"] },
+          quantity: { type: "integer", example: 5 },
+          note: { type: "string" },
+          referenceType: {
+            type: "string",
+            enum: ["PURCHASE", "MANUAL_ADJUSTMENT"],
+          },
+          referenceId: { type: "string" },
+        },
       },
     },
   },
@@ -250,6 +339,72 @@ const openApiSpec = {
       "Customer",
       "List active customer service orders"
     ),
+    "/customer/service-orders/{id}/tracking": protectedGet(
+      "Customer",
+      "Get customer service order tracking"
+    ),
+    "/service-orders": {
+      get: {
+        ...protectedOperation("Service Order", "List service orders"),
+        parameters: [
+          queryParam("search"),
+          queryParam("status"),
+          queryParam("mechanicId"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+      post: {
+        ...protectedOperation("Service Order", "Create service order"),
+        requestBody: jsonBody("ServiceOrderRequest"),
+      },
+    },
+    "/service-orders/{id}": {
+      get: protectedOperation("Service Order", "Get service order detail"),
+      patch: {
+        ...protectedOperation("Service Order", "Update service order"),
+        requestBody: jsonBody("ServiceOrderRequest"),
+      },
+    },
+    "/service-orders/{id}/status": {
+      patch: {
+        ...protectedOperation("Service Order", "Update service order status"),
+        requestBody: jsonBody("ServiceOrderStatusRequest"),
+      },
+    },
+    "/service-orders/{id}/assign-mechanic": {
+      patch: {
+        ...protectedOperation("Service Order", "Assign mechanic"),
+        requestBody: jsonBody("AssignMechanicRequest"),
+      },
+    },
+    "/service-orders/{id}/service-items": {
+      post: {
+        ...protectedOperation("Service Order", "Add service item"),
+        requestBody: jsonBody("ServiceOrderServiceItemRequest"),
+      },
+    },
+    "/service-orders/{id}/sparepart-items": {
+      post: {
+        ...protectedOperation("Service Order", "Add sparepart item"),
+        requestBody: jsonBody("ServiceOrderSparepartItemRequest"),
+      },
+    },
+    "/service-orders/{id}/notes": {
+      post: {
+        ...protectedOperation("Service Order", "Add service order note"),
+        requestBody: jsonBody("ServiceOrderNoteRequest"),
+      },
+    },
+    "/service-orders/{id}/photos": {
+      post: {
+        ...protectedOperation("Service Order", "Add progress photo URL"),
+        requestBody: jsonBody("ServiceOrderPhotoRequest"),
+      },
+    },
+    "/service-orders/{id}/complete": {
+      patch: protectedOperation("Service Order", "Complete service order"),
+    },
     "/customer/service-history": protectedGet(
       "Customer",
       "List customer service history"
@@ -288,9 +443,27 @@ const openApiSpec = {
       "Manage sparepart category detail"
     ),
     "/spareparts": masterCollectionEndpoint("Master Data", "Manage spareparts"),
+    "/spareparts/low-stock": protectedGet(
+      "Inventory",
+      "List low-stock spareparts"
+    ),
     "/spareparts/{id}": masterDetailEndpoint(
       "Master Data",
       "Manage sparepart detail"
+    ),
+    "/spareparts/{id}/stock-adjustment": {
+      post: {
+        ...protectedOperation("Inventory", "Create stock adjustment"),
+        requestBody: jsonBody("StockAdjustmentRequest"),
+      },
+    },
+    "/spareparts/{id}/stock-movements": protectedGet(
+      "Inventory",
+      "List stock movements by sparepart"
+    ),
+    "/stock-movements": protectedGet(
+      "Inventory",
+      "List stock movements"
     ),
     "/admin/dashboard/summary": protectedGet(
       "Admin Dashboard",

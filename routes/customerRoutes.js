@@ -1,6 +1,7 @@
 const express = require("express");
 const { ROLES } = require("../config/auth");
 const customerController = require("../controllers/customerController");
+const serviceOrderController = require("../controllers/serviceOrderController");
 const {
   authMiddleware,
   roleMiddleware,
@@ -19,6 +20,10 @@ router.patch("/vehicles/:id", customerController.updateVehicle);
 router.delete("/vehicles/:id", customerController.deleteVehicle);
 router.get("/bookings", customerController.listBookings);
 router.get("/service-orders/active", customerController.listActiveServiceOrders);
+router.get(
+  "/service-orders/:id/tracking",
+  serviceOrderController.customerTracking
+);
 router.get("/service-history", customerController.listServiceHistory);
 router.get("/invoices", customerController.listInvoices);
 router.get("/invoices/:id", customerController.getInvoice);

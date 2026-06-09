@@ -105,7 +105,7 @@ function listActiveServiceOrders(customerId) {
     .filter(
       (order) =>
         order.customerId === customerId &&
-        !["DONE", "CANCELLED"].includes(order.status)
+        !["COMPLETED", "CANCELLED"].includes(order.status)
     )
     .map(clone);
 }

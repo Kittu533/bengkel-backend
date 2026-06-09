@@ -402,7 +402,7 @@ async function listSpareparts(query) {
   const { page, limit, skip } = normalizePagination(query);
   const where = {
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
-    ...(query.brand ? { brand: query.brand } : {}),
+    ...(query.brand ? { brand: { contains: query.brand, mode: "insensitive" } } : {}),
     ...(query.vehicleType ? { vehicleType: useVehicleType(query.vehicleType) } : {}),
     ...(query.search
       ? {

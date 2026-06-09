@@ -17,6 +17,9 @@ model User {
   updatedAt    DateTime       @updatedAt @map("updated_at")
   customer     Customer?
   refreshToken RefreshToken[]
+  assignedServiceOrders ServiceOrder[] @relation("MechanicServiceOrders")
+  serviceOrderNotes ServiceOrderNote[]
+  stockMovements StockMovement[] @relation("StockMovementCreator")
   userRoles    UserRole[]
 
   @@map("users")
@@ -126,10 +129,33 @@ model Sparepart {
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
   category    SparepartCategory @relation(fields: [categoryId], references: [id])
+  stockMovements StockMovement[]
 
   @@index([categoryId])
   @@index([brand])
   @@map("spareparts")
+}
+
+model StockMovement {
+  id            String    @id @default(uuid())
+  sparepartId   String    @map("sparepart_id")
+  type          String
+  quantity      Int
+  beforeStock   Int       @map("before_stock")
+  afterStock    Int       @map("after_stock")
+  note          String?
+  referenceType String?   @map("reference_type")
+  referenceId   String?   @map("reference_id")
+  createdById   String?   @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  createdBy     User?     @relation("StockMovementCreator", fields: [createdById], references: [id])
+  sparepart     Sparepart @relation(fields: [sparepartId], references: [id])
+
+  @@index([sparepartId])
+  @@index([createdById])
+  @@index([type])
+  @@index([referenceType, referenceId])
+  @@map("stock_movements")
 }
 
 model CustomerVehicle {
@@ -179,21 +205,98 @@ model ServiceOrder {
   id                  String           @id @default(uuid())
   customerId          String           @map("customer_id")
   vehicleId           String?          @map("vehicle_id")
+  mechanicId          String?          @map("mechanic_id")
   code                String           @unique
   serviceName         String           @map("service_name")
   status              String           @default("IN_PROGRESS")
   currentStep         String           @map("current_step")
+  checkInAt           DateTime?        @map("check_in_at")
   startedAt           DateTime?        @map("started_at")
   estimatedFinishedAt DateTime?        @map("estimated_finished_at")
+  finishedAt          DateTime?        @map("finished_at")
+  mileageIn           Int?             @map("mileage_in")
+  customerComplaint   String?          @map("customer_complaint")
+  initialDiagnosis    String?          @map("initial_diagnosis")
+  totalServicePrice   Int              @default(0) @map("total_service_price")
+  totalSparepartPrice Int              @default(0) @map("total_sparepart_price")
+  grandTotal          Int              @default(0) @map("grand_total")
   createdAt           DateTime         @default(now()) @map("created_at")
   updatedAt           DateTime         @updatedAt @map("updated_at")
   customer            Customer         @relation(fields: [customerId], references: [id])
+  mechanic            User?            @relation("MechanicServiceOrders", fields: [mechanicId], references: [id])
   vehicle             CustomerVehicle? @relation(fields: [vehicleId], references: [id])
+  notes               ServiceOrderNote[]
+  photos              ServiceOrderPhoto[]
+  serviceItems        ServiceOrderServiceItem[]
+  sparepartItems      ServiceOrderSparepartItem[]
 
   @@index([customerId])
   @@index([vehicleId])
+  @@index([mechanicId])
   @@index([status])
   @@map("service_orders")
+}
+
+model ServiceOrderServiceItem {
+  id             String       @id @default(uuid())
+  serviceOrderId String       @map("service_order_id")
+  serviceCatalogId String?    @map("service_catalog_id")
+  name           String
+  price          Int
+  quantity       Int          @default(1)
+  subtotal       Int
+  createdAt      DateTime     @default(now()) @map("created_at")
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([serviceCatalogId])
+  @@map("service_order_service_items")
+}
+
+model ServiceOrderSparepartItem {
+  id             String       @id @default(uuid())
+  serviceOrderId String       @map("service_order_id")
+  sparepartId    String?      @map("sparepart_id")
+  name           String
+  price          Int
+  quantity       Int
+  subtotal       Int
+  createdAt      DateTime     @default(now()) @map("created_at")
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([sparepartId])
+  @@map("service_order_sparepart_items")
+}
+
+model ServiceOrderNote {
+  id             String       @id @default(uuid())
+  serviceOrderId String       @map("service_order_id")
+  userId         String       @map("user_id")
+  note           String
+  visibility     String       @default("INTERNAL")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([userId])
+  @@index([visibility])
+  @@map("service_order_notes")
+}
+
+model ServiceOrderPhoto {
+  id             String       @id @default(uuid())
+  serviceOrderId String       @map("service_order_id")
+  url            String
+  caption        String?
+  visibility     String       @default("CUSTOMER_VISIBLE")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([visibility])
+  @@map("service_order_photos")
 }
 
 model ServiceHistory {

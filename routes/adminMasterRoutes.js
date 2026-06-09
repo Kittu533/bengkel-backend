@@ -1,6 +1,7 @@
 const express = require("express");
 const { ROLES } = require("../config/auth");
 const adminMasterController = require("../controllers/adminMasterController");
+const stockMovementController = require("../controllers/stockMovementController");
 const {
   authMiddleware,
   roleMiddleware,
@@ -29,6 +30,16 @@ mountResource(
   "/sparepart-categories",
   adminMasterController.sparepartCategories
 );
+router.get("/spareparts/low-stock", stockMovementController.lowStock);
+router.post(
+  "/spareparts/:id/stock-adjustment",
+  stockMovementController.stockAdjustment
+);
+router.get(
+  "/spareparts/:id/stock-movements",
+  stockMovementController.sparepartMovements
+);
+router.get("/stock-movements", stockMovementController.movements);
 mountResource(router, "/spareparts", adminMasterController.spareparts, true);
 
 function mountResource(routerInstance, path, controller, withDetail = false) {

@@ -1,7 +1,7 @@
 const { getPrisma } = require("./prismaClient");
 
-const ACTIVE_BOOKING_EXCLUDED_STATUSES = ["CANCELLED", "DONE"];
-const ACTIVE_SERVICE_ORDER_EXCLUDED_STATUSES = ["DONE", "CANCELLED"];
+const ACTIVE_BOOKING_EXCLUDED_STATUSES = ["CANCELLED", "CONVERTED"];
+const ACTIVE_SERVICE_ORDER_EXCLUDED_STATUSES = ["COMPLETED", "CANCELLED"];
 
 function useMemoryStore() {
   return process.env.NODE_ENV === "test" || !process.env.DATABASE_URL;
