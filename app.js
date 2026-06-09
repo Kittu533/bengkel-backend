@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { ROLES } = require("./config/auth");
 const { authMiddleware, roleMiddleware } = require("./middleware/authMiddleware");
+const { requestLogger } = require("./middleware/requestLogger");
 const {
   errorMiddleware,
   notFoundMiddleware,
@@ -9,8 +10,10 @@ const {
 const userRepository = require("./models/userRepository");
 const publicCatalogRepository = require("./models/publicCatalogRepository");
 const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
+const adminMasterRoutes = require("./routes/adminMasterRoutes");
 const authRoutes = require("./routes/authRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const docsRoutes = require("./routes/docsRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const { sendSuccess } = require("./utils/response");
 
@@ -28,6 +31,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(requestLogger);
 app.use(express.json());
 
 app.use(async (_req, _res, next) => {
@@ -43,8 +47,10 @@ app.get("/api/health", (_req, res) => {
   sendSuccess(res, 200, "API berjalan", { status: "ok" });
 });
 
+app.use("/api/docs", docsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api", adminMasterRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/public", publicCatalogRoutes);
 
