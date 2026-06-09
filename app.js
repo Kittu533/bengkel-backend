@@ -7,7 +7,9 @@ const {
   notFoundMiddleware,
 } = require("./middleware/errorMiddleware");
 const userRepository = require("./models/userRepository");
+const publicCatalogRepository = require("./models/publicCatalogRepository");
 const authRoutes = require("./routes/authRoutes");
+const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const { sendSuccess } = require("./utils/response");
 
 const app = express();
@@ -15,6 +17,7 @@ const app = express();
 const boot = Promise.all([
   userRepository.seedRoles(),
   userRepository.seedDefaultAdmin(),
+  publicCatalogRepository.seedPublicCatalogs(),
 ]);
 
 app.use(
@@ -39,6 +42,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/public", publicCatalogRoutes);
 
 if (process.env.NODE_ENV === "test") {
   app.patch("/__test/users/:email/inactive", async (req, res) => {

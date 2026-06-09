@@ -63,3 +63,66 @@ model RefreshToken {
 
   @@map("refresh_tokens")
 }
+
+model ServiceCategory {
+  id        String           @id @default(uuid())
+  name      String
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  services  ServiceCatalog[]
+
+  @@map("service_categories")
+}
+
+model ServiceCatalog {
+  id                       String          @id @default(uuid())
+  categoryId               String          @map("category_id")
+  name                     String
+  slug                     String          @unique
+  description              String
+  vehicleType              String          @map("vehicle_type")
+  price                    Int
+  estimatedDurationMinutes Int             @map("estimated_duration_minutes")
+  isActive                 Boolean         @default(true) @map("is_active")
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+  category                 ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([vehicleType])
+  @@map("service_catalogs")
+}
+
+model SparepartCategory {
+  id         String      @id @default(uuid())
+  name       String
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  spareparts Sparepart[]
+
+  @@map("sparepart_categories")
+}
+
+model Sparepart {
+  id          String            @id @default(uuid())
+  categoryId  String            @map("category_id")
+  name        String
+  sku         String            @unique
+  brand       String
+  description String
+  vehicleType String            @map("vehicle_type")
+  stock       Int
+  minStock    Int               @map("min_stock")
+  sellPrice   Int               @map("sell_price")
+  costPrice   Int               @map("cost_price")
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  category    SparepartCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([brand])
+  @@map("spareparts")
+}
