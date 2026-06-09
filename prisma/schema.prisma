@@ -41,14 +41,19 @@ model UserRole {
 }
 
 model Customer {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  name      String
-  phone     String   @unique
-  email     String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  user      User     @relation(fields: [userId], references: [id])
+  id              String           @id @default(uuid())
+  userId          String           @unique @map("user_id")
+  name            String
+  phone           String           @unique
+  email           String           @unique
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  bookings        Booking[]
+  invoices        Invoice[]
+  serviceHistory  ServiceHistory[]
+  serviceOrders   ServiceOrder[]
+  user            User             @relation(fields: [userId], references: [id])
+  vehicles        CustomerVehicle[]
 
   @@map("customers")
 }
@@ -125,4 +130,104 @@ model Sparepart {
   @@index([categoryId])
   @@index([brand])
   @@map("spareparts")
+}
+
+model CustomerVehicle {
+  id          String           @id @default(uuid())
+  customerId  String           @map("customer_id")
+  plateNumber String           @map("plate_number")
+  brand       String
+  model       String
+  vehicleType String           @map("vehicle_type")
+  year        Int?
+  color       String?
+  notes       String?
+  isActive    Boolean          @default(true) @map("is_active")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  bookings    Booking[]
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  histories   ServiceHistory[]
+  serviceOrders ServiceOrder[]
+
+  @@index([customerId])
+  @@index([plateNumber])
+  @@map("customer_vehicles")
+}
+
+model Booking {
+  id          String           @id @default(uuid())
+  customerId  String           @map("customer_id")
+  vehicleId   String?          @map("vehicle_id")
+  code        String           @unique
+  serviceName String           @map("service_name")
+  scheduleAt  DateTime         @map("schedule_at")
+  status      String           @default("WAITING_CONFIRMATION")
+  notes       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  vehicle     CustomerVehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model ServiceOrder {
+  id                  String           @id @default(uuid())
+  customerId          String           @map("customer_id")
+  vehicleId           String?          @map("vehicle_id")
+  code                String           @unique
+  serviceName         String           @map("service_name")
+  status              String           @default("IN_PROGRESS")
+  currentStep         String           @map("current_step")
+  startedAt           DateTime?        @map("started_at")
+  estimatedFinishedAt DateTime?        @map("estimated_finished_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  customer            Customer         @relation(fields: [customerId], references: [id])
+  vehicle             CustomerVehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([status])
+  @@map("service_orders")
+}
+
+model ServiceHistory {
+  id          String           @id @default(uuid())
+  customerId  String           @map("customer_id")
+  vehicleId   String?          @map("vehicle_id")
+  serviceName String           @map("service_name")
+  serviceDate DateTime         @map("service_date")
+  odometer    Int?
+  totalPrice  Int              @map("total_price")
+  notes       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  vehicle     CustomerVehicle? @relation(fields: [vehicleId], references: [id])
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@map("service_history")
+}
+
+model Invoice {
+  id            String    @id @default(uuid())
+  customerId    String    @map("customer_id")
+  invoiceNumber String    @unique @map("invoice_number")
+  status        String    @default("UNPAID")
+  issuedAt      DateTime  @map("issued_at")
+  dueAt         DateTime? @map("due_at")
+  totalAmount   Int       @map("total_amount")
+  paidAt        DateTime? @map("paid_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  customer      Customer  @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@map("invoices")
 }

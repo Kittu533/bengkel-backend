@@ -9,6 +9,7 @@ const {
 const userRepository = require("./models/userRepository");
 const publicCatalogRepository = require("./models/publicCatalogRepository");
 const authRoutes = require("./routes/authRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const { sendSuccess } = require("./utils/response");
 
@@ -42,6 +43,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/customer", customerRoutes);
 app.use("/api/public", publicCatalogRoutes);
 
 if (process.env.NODE_ENV === "test") {

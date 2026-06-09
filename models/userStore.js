@@ -77,6 +77,10 @@ function findUserById(id) {
   return users.get(String(id)) || null;
 }
 
+function findCustomerByUserId(userId) {
+  return customers.get(String(userId)) || null;
+}
+
 function saveRefreshToken({ tokenId, userId }) {
   refreshTokens.set(tokenId, {
     tokenId,
@@ -126,6 +130,7 @@ module.exports = {
   findUserByEmail,
   findUserByPhone,
   findUserById,
+  findCustomerByUserId,
   saveRefreshToken,
   findRefreshToken,
   revokeRefreshToken,
