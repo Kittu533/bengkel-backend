@@ -2,9 +2,9 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "0.7.0",
+    version: "0.8.0",
     description:
-      "API contract untuk auth, public catalog, customer area, dan admin dashboard.",
+      "API contract untuk auth, public catalog, customer area, booking service, dan admin dashboard.",
   },
   servers: [{ url: "/api", description: "Current API host" }],
   tags: [
@@ -12,6 +12,7 @@ const openApiSpec = {
     { name: "Auth" },
     { name: "Public Catalog" },
     { name: "Customer" },
+    { name: "Booking" },
     { name: "Admin Dashboard" },
     { name: "Master Data" },
   ],
@@ -71,6 +72,41 @@ const openApiSpec = {
           color: { type: "string", example: "Hitam" },
           notes: { type: "string" },
         },
+      },
+      BookingRequest: {
+        type: "object",
+        required: [
+          "vehicleId",
+          "serviceCatalogId",
+          "bookingDate",
+          "bookingTime",
+          "complaint",
+        ],
+        properties: {
+          vehicleId: { type: "string", format: "uuid" },
+          serviceCatalogId: { type: "string", format: "uuid" },
+          bookingDate: { type: "string", example: "2026-06-10" },
+          bookingTime: { type: "string", example: "09:00" },
+          complaint: { type: "string", minLength: 5 },
+        },
+      },
+      BookingRejectRequest: {
+        type: "object",
+        required: ["reason"],
+        properties: { reason: { type: "string", minLength: 5 } },
+      },
+      BookingRescheduleRequest: {
+        type: "object",
+        required: ["bookingDate", "bookingTime", "reason"],
+        properties: {
+          bookingDate: { type: "string", example: "2026-06-10" },
+          bookingTime: { type: "string", example: "10:30" },
+          reason: { type: "string", minLength: 5 },
+        },
+      },
+      BookingCancelRequest: {
+        type: "object",
+        properties: { reason: { type: "string" } },
       },
     },
   },
@@ -164,6 +200,52 @@ const openApiSpec = {
       delete: protectedOperation("Customer", "Delete customer vehicle"),
     },
     "/customer/bookings": protectedGet("Customer", "List customer bookings"),
+    "/bookings": {
+      get: {
+        ...protectedOperation("Booking", "List bookings"),
+        parameters: [
+          queryParam("search"),
+          queryParam("status"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+      post: {
+        ...protectedOperation("Booking", "Create customer booking"),
+        requestBody: jsonBody("BookingRequest"),
+        responses: {
+          201: { description: "Booking created" },
+          409: { description: "Slot conflict" },
+        },
+      },
+    },
+    "/bookings/{id}": {
+      get: protectedOperation("Booking", "Get booking detail"),
+    },
+    "/bookings/{id}/accept": {
+      patch: protectedOperation("Booking", "Accept booking"),
+    },
+    "/bookings/{id}/reject": {
+      patch: {
+        ...protectedOperation("Booking", "Reject booking"),
+        requestBody: jsonBody("BookingRejectRequest"),
+      },
+    },
+    "/bookings/{id}/reschedule": {
+      patch: {
+        ...protectedOperation("Booking", "Reschedule booking"),
+        requestBody: jsonBody("BookingRescheduleRequest"),
+      },
+    },
+    "/bookings/{id}/cancel": {
+      patch: {
+        ...protectedOperation("Booking", "Cancel booking"),
+        requestBody: jsonBody("BookingCancelRequest"),
+      },
+    },
+    "/bookings/{id}/convert-to-service-order": {
+      post: protectedOperation("Booking", "Convert booking to service order"),
+    },
     "/customer/service-orders/active": protectedGet(
       "Customer",
       "List active customer service orders"

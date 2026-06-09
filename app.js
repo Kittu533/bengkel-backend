@@ -12,6 +12,7 @@ const publicCatalogRepository = require("./models/publicCatalogRepository");
 const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
 const adminMasterRoutes = require("./routes/adminMasterRoutes");
 const authRoutes = require("./routes/authRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const docsRoutes = require("./routes/docsRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
@@ -49,10 +50,11 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/docs", docsRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/admin/dashboard", adminDashboardRoutes);
-app.use("/api", adminMasterRoutes);
-app.use("/api/customer", customerRoutes);
 app.use("/api/public", publicCatalogRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/customer", customerRoutes);
+app.use("/api", adminMasterRoutes);
 
 if (process.env.NODE_ENV === "test") {
   app.patch("/__test/users/:email/inactive", async (req, res) => {
