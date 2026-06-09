@@ -8,6 +8,7 @@ const {
 } = require("./middleware/errorMiddleware");
 const userRepository = require("./models/userRepository");
 const publicCatalogRepository = require("./models/publicCatalogRepository");
+const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
 const authRoutes = require("./routes/authRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
@@ -43,6 +44,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/public", publicCatalogRoutes);
 
