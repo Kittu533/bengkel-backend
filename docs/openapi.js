@@ -2,9 +2,9 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.4.0",
+    version: "1.5.0",
     description:
-      "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, dan admin dashboard.",
+      "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, admin dashboard, dan super admin audit.",
   },
   servers: [{ url: "/api", description: "Current API host" }],
   tags: [
@@ -283,6 +283,31 @@ const openApiSpec = {
           isActive: { type: "boolean" },
         },
       },
+      AuditLog: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          actorId: { type: "string", nullable: true },
+          action: { type: "string", example: "tenant.create" },
+          entityType: { type: "string", example: "Tenant" },
+          entityId: { type: "string", nullable: true },
+          metadata: { type: "object", nullable: true },
+          ipAddress: { type: "string", nullable: true },
+          userAgent: { type: "string", nullable: true },
+          requestId: { type: "string", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+          actor: {
+            type: "object",
+            nullable: true,
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              email: { type: "string", format: "email" },
+              role: { type: "string" },
+            },
+          },
+        },
+      },
     },
   },
   paths: {
@@ -384,6 +409,40 @@ const openApiSpec = {
         requestBody: jsonBody("SubscriptionPlanRequest"),
       },
       delete: protectedOperation("Super Admin", "Deactivate subscription plan"),
+    },
+    "/super-admin/audit-logs": {
+      get: {
+        ...protectedOperation("Super Admin", "List audit logs"),
+        parameters: [
+          queryParam("search"),
+          queryParam("action"),
+          queryParam("entityType"),
+          queryParam("actorId"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+        responses: {
+          200: {
+            description: "Audit log berhasil diambil",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    message: { type: "string" },
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/AuditLog" },
+                    },
+                    meta: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     "/public/service-catalogs": listEndpoint("Public Catalog", "List service catalogs"),
     "/public/service-catalogs/{id}": detailEndpoint(
