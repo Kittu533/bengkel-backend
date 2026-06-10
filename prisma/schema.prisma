@@ -229,6 +229,7 @@ model ServiceOrder {
   photos              ServiceOrderPhoto[]
   serviceItems        ServiceOrderServiceItem[]
   sparepartItems      ServiceOrderSparepartItem[]
+  invoice             Invoice?
 
   @@index([customerId])
   @@index([vehicleId])
@@ -318,19 +319,60 @@ model ServiceHistory {
 }
 
 model Invoice {
-  id            String    @id @default(uuid())
-  customerId    String    @map("customer_id")
-  invoiceNumber String    @unique @map("invoice_number")
-  status        String    @default("UNPAID")
-  issuedAt      DateTime  @map("issued_at")
-  dueAt         DateTime? @map("due_at")
-  totalAmount   Int       @map("total_amount")
-  paidAt        DateTime? @map("paid_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  customer      Customer  @relation(fields: [customerId], references: [id])
+  id             String        @id @default(uuid())
+  customerId     String        @map("customer_id")
+  serviceOrderId String?       @unique @map("service_order_id")
+  invoiceNumber  String        @unique @map("invoice_number")
+  status         String        @default("UNPAID")
+  issuedAt       DateTime      @map("issued_at")
+  dueAt          DateTime?     @map("due_at")
+  totalAmount    Int           @map("total_amount")
+  paidAmount     Int           @default(0) @map("paid_amount")
+  pdfUrl         String?       @map("pdf_url")
+  paidAt         DateTime?     @map("paid_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id])
+  items          InvoiceItem[]
+  payments       Payment[]
 
   @@index([customerId])
   @@index([status])
   @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String   @map("invoice_id")
+  type        String
+  name        String
+  quantity    Int      @default(1)
+  price       Int
+  subtotal    Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@index([type])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  invoiceId         String   @map("invoice_id")
+  paymentNumber     String   @unique @map("payment_number")
+  amount            Int
+  method            String
+  status            String   @default("CONFIRMED")
+  paidAt            DateTime @map("paid_at")
+  referenceNumber   String?  @map("reference_number")
+  note              String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payments")
 }

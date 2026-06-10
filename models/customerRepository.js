@@ -244,6 +244,11 @@ async function listInvoices(userId) {
   const prisma = getPrisma();
   const invoices = await prisma.invoice.findMany({
     where: { customerId: customer.id },
+    include: {
+      serviceOrder: { include: { vehicle: true } },
+      items: true,
+      payments: { orderBy: { createdAt: "desc" } },
+    },
     orderBy: { issuedAt: "desc" },
   });
   return serialize(invoices);
@@ -258,6 +263,11 @@ async function getInvoice(userId, invoiceId) {
   const prisma = getPrisma();
   const invoice = await prisma.invoice.findFirst({
     where: { id: invoiceId, customerId: customer.id },
+    include: {
+      serviceOrder: { include: { vehicle: true } },
+      items: true,
+      payments: { orderBy: { createdAt: "desc" } },
+    },
   });
   return invoice ? serialize(invoice) : null;
 }

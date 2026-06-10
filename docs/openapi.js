@@ -2,7 +2,7 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
       "API contract untuk auth, public catalog, customer area, booking, service order, dan admin dashboard.",
   },
@@ -15,6 +15,8 @@ const openApiSpec = {
     { name: "Booking" },
     { name: "Service Order" },
     { name: "Inventory" },
+    { name: "Invoice" },
+    { name: "Payment" },
     { name: "Admin Dashboard" },
     { name: "Master Data" },
   ],
@@ -195,6 +197,45 @@ const openApiSpec = {
             enum: ["PURCHASE", "MANUAL_ADJUSTMENT"],
           },
           referenceId: { type: "string" },
+        },
+      },
+      InvoiceRequest: {
+        type: "object",
+        required: ["serviceOrderId"],
+        properties: {
+          serviceOrderId: { type: "string" },
+          issuedAt: { type: "string", format: "date-time" },
+          dueAt: { type: "string", format: "date-time" },
+        },
+      },
+      InvoiceUpdateRequest: {
+        type: "object",
+        properties: {
+          status: {
+            type: "string",
+            enum: ["UNPAID", "PARTIAL", "PAID", "CANCELLED", "REFUNDED"],
+          },
+          dueAt: { type: "string", format: "date-time", nullable: true },
+          pdfUrl: { type: "string", nullable: true },
+        },
+      },
+      PaymentRequest: {
+        type: "object",
+        required: ["invoiceId", "amount", "method"],
+        properties: {
+          invoiceId: { type: "string" },
+          amount: { type: "integer", minimum: 1 },
+          method: {
+            type: "string",
+            enum: ["CASH", "BANK_TRANSFER", "QRIS_MANUAL", "MIDTRANS", "XENDIT"],
+          },
+          status: {
+            type: "string",
+            enum: ["PENDING", "CONFIRMED", "FAILED", "CANCELLED", "REFUNDED"],
+          },
+          paidAt: { type: "string", format: "date-time" },
+          referenceNumber: { type: "string" },
+          note: { type: "string" },
         },
       },
     },
@@ -465,6 +506,54 @@ const openApiSpec = {
       "Inventory",
       "List stock movements"
     ),
+    "/invoices": {
+      get: {
+        ...protectedOperation("Invoice", "List invoices"),
+        parameters: [
+          queryParam("search"),
+          queryParam("status"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+      post: {
+        ...protectedOperation("Invoice", "Create invoice from service order"),
+        requestBody: jsonBody("InvoiceRequest"),
+      },
+    },
+    "/invoices/{id}": {
+      get: protectedOperation("Invoice", "Get invoice detail"),
+      patch: {
+        ...protectedOperation("Invoice", "Update invoice"),
+        requestBody: jsonBody("InvoiceUpdateRequest"),
+      },
+    },
+    "/invoices/{id}/generate-pdf": {
+      post: protectedOperation("Invoice", "Generate placeholder invoice PDF"),
+    },
+    "/payments": {
+      get: {
+        ...protectedOperation("Payment", "List payments"),
+        parameters: [
+          queryParam("invoiceId"),
+          queryParam("status"),
+          queryParam("method"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+      post: {
+        ...protectedOperation("Payment", "Create payment"),
+        requestBody: jsonBody("PaymentRequest"),
+      },
+    },
+    "/payments/{id}": {
+      get: protectedOperation("Payment", "Get payment detail"),
+      patch: {
+        ...protectedOperation("Payment", "Update payment"),
+        requestBody: jsonBody("PaymentRequest"),
+      },
+    },
     "/admin/dashboard/summary": protectedGet(
       "Admin Dashboard",
       "Admin dashboard summary"

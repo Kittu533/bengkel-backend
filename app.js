@@ -15,6 +15,7 @@ const authRoutes = require("./routes/authRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const docsRoutes = require("./routes/docsRoutes");
+const invoiceRoutes = require("./routes/invoiceRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const serviceOrderRoutes = require("./routes/serviceOrderRoutes");
 const { sendSuccess } = require("./utils/response");
@@ -64,6 +65,7 @@ app.use("/api/public", publicCatalogRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/service-orders", serviceOrderRoutes);
+app.use("/api", invoiceRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api", adminMasterRoutes);
 
