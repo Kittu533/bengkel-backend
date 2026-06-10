@@ -1,5 +1,6 @@
 const { HttpError } = require("../utils/httpError");
 const { verifyAccessToken } = require("../utils/token");
+const { buildTenantContext } = require("./tenantContext");
 
 function authMiddleware(req, _res, next) {
   const header = req.headers.authorization || "";
@@ -15,7 +16,10 @@ function authMiddleware(req, _res, next) {
       id: payload.sub,
       email: payload.email,
       roles: payload.roles || [],
+      tenantId: payload.tenantId || null,
+      branchId: payload.branchId || null,
     };
+    req.tenantContext = buildTenantContext(req);
     return next();
   } catch (_error) {
     return next(new HttpError(401, "Token tidak valid"));

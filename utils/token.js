@@ -13,6 +13,8 @@ function signAccessToken(user) {
       sub: user.id,
       email: user.email,
       roles: user.roles,
+      tenantId: user.tenantId || null,
+      branchId: user.branchId || null,
     },
     ACCESS_TOKEN_SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRES_IN }

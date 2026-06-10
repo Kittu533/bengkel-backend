@@ -2,9 +2,9 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.6.0",
+    version: "1.7.0",
     description:
-      "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, admin dashboard, dan super admin audit.",
+      "API contract untuk auth, tenant context, public catalog, customer area, booking, service order, mechanic workspace, invoice, admin dashboard, dan super admin audit.",
   },
   servers: [{ url: "/api", description: "Current API host" }],
   tags: [

@@ -19,6 +19,8 @@ function prismaUserToDomain(user) {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    tenantId: user.tenantId || null,
+    branchId: user.branchId || null,
     passwordHash: user.passwordHash,
     status: user.status,
     roles: user.userRoles?.map((userRole) => userRole.role.name) || [],
