@@ -7,19 +7,21 @@ const {
 } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+const adminOnly = [authMiddleware, roleMiddleware([ROLES.ADMIN])];
 
-router.use(authMiddleware);
-router.use(roleMiddleware([ROLES.ADMIN]));
+router.get("/invoices", adminOnly, invoiceController.listInvoices);
+router.post("/invoices", adminOnly, invoiceController.createInvoice);
+router.get("/invoices/:id", adminOnly, invoiceController.getInvoice);
+router.patch("/invoices/:id", adminOnly, invoiceController.updateInvoice);
+router.post(
+  "/invoices/:id/generate-pdf",
+  adminOnly,
+  invoiceController.generatePdf
+);
 
-router.get("/invoices", invoiceController.listInvoices);
-router.post("/invoices", invoiceController.createInvoice);
-router.get("/invoices/:id", invoiceController.getInvoice);
-router.patch("/invoices/:id", invoiceController.updateInvoice);
-router.post("/invoices/:id/generate-pdf", invoiceController.generatePdf);
-
-router.get("/payments", invoiceController.listPayments);
-router.post("/payments", invoiceController.createPayment);
-router.get("/payments/:id", invoiceController.getPayment);
-router.patch("/payments/:id", invoiceController.updatePayment);
+router.get("/payments", adminOnly, invoiceController.listPayments);
+router.post("/payments", adminOnly, invoiceController.createPayment);
+router.get("/payments/:id", adminOnly, invoiceController.getPayment);
+router.patch("/payments/:id", adminOnly, invoiceController.updatePayment);
 
 module.exports = router;

@@ -2,7 +2,7 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.2.0",
+    version: "1.3.0",
     description:
       "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, dan admin dashboard.",
   },
@@ -19,6 +19,8 @@ const openApiSpec = {
     { name: "Invoice" },
     { name: "Payment" },
     { name: "Admin Dashboard" },
+    { name: "Owner Dashboard" },
+    { name: "Reports" },
     { name: "Master Data" },
   ],
   components: {
@@ -494,6 +496,39 @@ const openApiSpec = {
         requestBody: jsonBody("ServiceOrderChecklistRequest"),
       },
     },
+    "/owner/dashboard/summary": protectedGet(
+      "Owner Dashboard",
+      "Owner dashboard summary"
+    ),
+    "/reports/revenue": {
+      get: {
+        ...protectedOperation("Reports", "Revenue report"),
+        parameters: [queryParam("startDate"), queryParam("endDate")],
+      },
+    },
+    "/reports/services": {
+      get: {
+        ...protectedOperation("Reports", "Top service report"),
+        parameters: [queryParam("startDate"), queryParam("endDate")],
+      },
+    },
+    "/reports/spareparts": {
+      get: {
+        ...protectedOperation("Reports", "Top sparepart report"),
+        parameters: [queryParam("startDate"), queryParam("endDate")],
+      },
+    },
+    "/reports/mechanics": {
+      get: {
+        ...protectedOperation("Reports", "Mechanic performance report"),
+        parameters: [queryParam("startDate"), queryParam("endDate")],
+      },
+    },
+    "/reports/unpaid-invoices": protectedGet(
+      "Reports",
+      "List unpaid invoices"
+    ),
+    "/reports/low-stock": protectedGet("Reports", "List low-stock spareparts"),
     "/customer/service-history": protectedGet(
       "Customer",
       "List customer service history"

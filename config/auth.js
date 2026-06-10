@@ -29,6 +29,13 @@ const DEFAULT_MECHANIC = Object.freeze({
   password: process.env.DEFAULT_MECHANIC_PASSWORD || "mechanic12345",
 });
 
+const DEFAULT_OWNER = Object.freeze({
+  name: process.env.DEFAULT_OWNER_NAME || "Owner BengkelPro",
+  email: process.env.DEFAULT_OWNER_EMAIL || "owner@bengkelpro.local",
+  phone: process.env.DEFAULT_OWNER_PHONE || "080000000003",
+  password: process.env.DEFAULT_OWNER_PASSWORD || "owner12345",
+});
+
 module.exports = {
   ACCESS_TOKEN_EXPIRES_IN,
   REFRESH_TOKEN_EXPIRES_IN,
@@ -37,4 +44,5 @@ module.exports = {
   ROLES,
   DEFAULT_ADMIN,
   DEFAULT_MECHANIC,
+  DEFAULT_OWNER,
 };

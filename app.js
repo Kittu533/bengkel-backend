@@ -17,6 +17,7 @@ const customerRoutes = require("./routes/customerRoutes");
 const docsRoutes = require("./routes/docsRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const mechanicRoutes = require("./routes/mechanicRoutes");
+const ownerReportRoutes = require("./routes/ownerReportRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const serviceOrderRoutes = require("./routes/serviceOrderRoutes");
 const { sendSuccess } = require("./utils/response");
@@ -31,6 +32,7 @@ const boot = Promise.all([
   userRepository.seedRoles(),
   userRepository.seedDefaultAdmin(),
   userRepository.seedDefaultMechanic(),
+  userRepository.seedDefaultOwner(),
   publicCatalogRepository.seedPublicCatalogs(),
 ]);
 
@@ -68,6 +70,7 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/mechanic", mechanicRoutes);
 app.use("/api/service-orders", serviceOrderRoutes);
+app.use("/api", ownerReportRoutes);
 app.use("/api", invoiceRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api", adminMasterRoutes);
