@@ -3,6 +3,7 @@ const {
   DEFAULT_ADMIN,
   DEFAULT_MECHANIC,
   DEFAULT_OWNER,
+  DEFAULT_SUPER_ADMIN,
   ROLES,
 } = require("../config/auth");
 const { getPrisma } = require("./prismaClient");
@@ -121,6 +122,66 @@ async function seedDefaultOwner() {
   return prismaUserToDomain(user);
 }
 
+async function seedDefaultSuperAdmin() {
+  if (useMemoryStore()) return null;
+
+  const prisma = getPrisma();
+  const email = DEFAULT_SUPER_ADMIN.email.toLowerCase();
+  const existingSuperAdmin = await prisma.user.findUnique({ where: { email } });
+  if (existingSuperAdmin) return null;
+
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: ROLES.SUPER_ADMIN },
+    update: {},
+    create: { name: ROLES.SUPER_ADMIN },
+  });
+
+  const user = await prisma.user.create({
+    data: {
+      name: DEFAULT_SUPER_ADMIN.name,
+      email,
+      phone: DEFAULT_SUPER_ADMIN.phone,
+      passwordHash: bcrypt.hashSync(DEFAULT_SUPER_ADMIN.password, 10),
+      userRoles: { create: { roleId: superAdminRole.id } },
+    },
+    include: { userRoles: { include: { role: true } } },
+  });
+
+  return prismaUserToDomain(user);
+}
+
+async function seedDefaultSubscriptionPlans() {
+  if (useMemoryStore()) return null;
+
+  const prisma = getPrisma();
+  return Promise.all([
+    prisma.subscriptionPlan.upsert({
+      where: { code: "STARTER" },
+      update: {},
+      create: {
+        name: "Starter",
+        code: "STARTER",
+        priceMonthly: 99000,
+        maxBranches: 1,
+        maxUsers: 5,
+        features: "Booking, service order, invoice, basic reports",
+      },
+    }),
+    prisma.subscriptionPlan.upsert({
+      where: { code: "PRO" },
+      update: {},
+      create: {
+        name: "Pro",
+        code: "PRO",
+        priceMonthly: 249000,
+        maxBranches: 3,
+        maxUsers: 20,
+        features: "Multi-branch, inventory, mechanic workspace, owner reports",
+      },
+    }),
+  ]);
+}
+
 async function createCustomerUser(user) {
   if (useMemoryStore()) return memoryStore.createCustomerUser(user);
 
@@ -227,6 +288,8 @@ module.exports = {
   seedDefaultAdmin,
   seedDefaultMechanic,
   seedDefaultOwner,
+  seedDefaultSuperAdmin,
+  seedDefaultSubscriptionPlans,
   createCustomerUser,
   findUserByEmail,
   findUserByPhone,

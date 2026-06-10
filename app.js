@@ -20,6 +20,7 @@ const mechanicRoutes = require("./routes/mechanicRoutes");
 const ownerReportRoutes = require("./routes/ownerReportRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const serviceOrderRoutes = require("./routes/serviceOrderRoutes");
+const superAdminRoutes = require("./routes/superAdminRoutes");
 const { sendSuccess } = require("./utils/response");
 
 const app = express();
@@ -33,6 +34,8 @@ const boot = Promise.all([
   userRepository.seedDefaultAdmin(),
   userRepository.seedDefaultMechanic(),
   userRepository.seedDefaultOwner(),
+  userRepository.seedDefaultSuperAdmin(),
+  userRepository.seedDefaultSubscriptionPlans(),
   publicCatalogRepository.seedPublicCatalogs(),
 ]);
 
@@ -66,6 +69,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/docs", docsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/public", publicCatalogRoutes);
+app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/mechanic", mechanicRoutes);

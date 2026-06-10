@@ -36,6 +36,13 @@ const DEFAULT_OWNER = Object.freeze({
   password: process.env.DEFAULT_OWNER_PASSWORD || "owner12345",
 });
 
+const DEFAULT_SUPER_ADMIN = Object.freeze({
+  name: process.env.DEFAULT_SUPER_ADMIN_NAME || "Super Admin BengkelPro",
+  email: process.env.DEFAULT_SUPER_ADMIN_EMAIL || "superadmin@bengkelpro.local",
+  phone: process.env.DEFAULT_SUPER_ADMIN_PHONE || "080000000000",
+  password: process.env.DEFAULT_SUPER_ADMIN_PASSWORD || "superadmin12345",
+});
+
 module.exports = {
   ACCESS_TOKEN_EXPIRES_IN,
   REFRESH_TOKEN_EXPIRES_IN,
@@ -45,4 +52,5 @@ module.exports = {
   DEFAULT_ADMIN,
   DEFAULT_MECHANIC,
   DEFAULT_OWNER,
+  DEFAULT_SUPER_ADMIN,
 };

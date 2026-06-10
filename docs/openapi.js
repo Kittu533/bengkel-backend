@@ -2,7 +2,7 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.3.0",
+    version: "1.4.0",
     description:
       "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, dan admin dashboard.",
   },
@@ -21,6 +21,7 @@ const openApiSpec = {
     { name: "Admin Dashboard" },
     { name: "Owner Dashboard" },
     { name: "Reports" },
+    { name: "Super Admin" },
     { name: "Master Data" },
   ],
   components: {
@@ -250,6 +251,38 @@ const openApiSpec = {
           note: { type: "string" },
         },
       },
+      TenantRequest: {
+        type: "object",
+        required: ["name"],
+        properties: {
+          name: { type: "string" },
+          slug: { type: "string" },
+          status: { type: "string", enum: ["ACTIVE", "INACTIVE", "SUSPENDED"] },
+          billingEmail: { type: "string", format: "email" },
+          phone: { type: "string" },
+          address: { type: "string" },
+          branchName: { type: "string" },
+          branchCode: { type: "string" },
+          planId: { type: "string" },
+          subscriptionStatus: {
+            type: "string",
+            enum: ["TRIAL", "ACTIVE", "PAST_DUE", "CANCELLED"],
+          },
+        },
+      },
+      SubscriptionPlanRequest: {
+        type: "object",
+        required: ["name", "priceMonthly"],
+        properties: {
+          name: { type: "string" },
+          code: { type: "string" },
+          priceMonthly: { type: "integer", minimum: 0 },
+          maxBranches: { type: "integer", minimum: 1 },
+          maxUsers: { type: "integer", minimum: 1 },
+          features: { type: "string" },
+          isActive: { type: "boolean" },
+        },
+      },
     },
   },
   paths: {
@@ -314,6 +347,43 @@ const openApiSpec = {
         },
         responses: { 200: { description: "Logout berhasil" } },
       },
+    },
+    "/super-admin/tenants": {
+      get: {
+        ...protectedOperation("Super Admin", "List tenants"),
+        parameters: [
+          queryParam("search"),
+          queryParam("status"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+      post: {
+        ...protectedOperation("Super Admin", "Create tenant"),
+        requestBody: jsonBody("TenantRequest"),
+      },
+    },
+    "/super-admin/tenants/{id}": {
+      get: protectedOperation("Super Admin", "Get tenant detail"),
+      patch: {
+        ...protectedOperation("Super Admin", "Update tenant"),
+        requestBody: jsonBody("TenantRequest"),
+      },
+      delete: protectedOperation("Super Admin", "Deactivate tenant"),
+    },
+    "/super-admin/plans": {
+      get: protectedOperation("Super Admin", "List subscription plans"),
+      post: {
+        ...protectedOperation("Super Admin", "Create subscription plan"),
+        requestBody: jsonBody("SubscriptionPlanRequest"),
+      },
+    },
+    "/super-admin/plans/{id}": {
+      patch: {
+        ...protectedOperation("Super Admin", "Update subscription plan"),
+        requestBody: jsonBody("SubscriptionPlanRequest"),
+      },
+      delete: protectedOperation("Super Admin", "Deactivate subscription plan"),
     },
     "/public/service-catalogs": listEndpoint("Public Catalog", "List service catalogs"),
     "/public/service-catalogs/{id}": detailEndpoint(

@@ -8,6 +8,8 @@ datasource db {
 
 model User {
   id           String         @id @default(uuid())
+  tenantId     String?        @map("tenant_id")
+  branchId     String?        @map("branch_id")
   name         String
   email        String         @unique
   phone        String         @unique
@@ -15,6 +17,8 @@ model User {
   status       String         @default("ACTIVE")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
+  tenant       Tenant?        @relation(fields: [tenantId], references: [id])
+  branch       Branch?        @relation(fields: [branchId], references: [id])
   customer     Customer?
   refreshToken RefreshToken[]
   assignedServiceOrders ServiceOrder[] @relation("MechanicServiceOrders")
@@ -23,7 +27,105 @@ model User {
   stockMovements StockMovement[] @relation("StockMovementCreator")
   userRoles    UserRole[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@map("users")
+}
+
+model Tenant {
+  id            String               @id @default(uuid())
+  name          String
+  slug          String               @unique
+  status        String               @default("ACTIVE")
+  billingEmail  String?              @map("billing_email")
+  phone         String?
+  address       String?
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  branches      Branch[]
+  subscriptions TenantSubscription[]
+  users         User[]
+  customers     Customer[]
+  serviceCategories ServiceCategory[]
+  serviceCatalogs ServiceCatalog[]
+  sparepartCategories SparepartCategory[]
+  spareparts    Sparepart[]
+  stockMovements StockMovement[]
+  vehicles      CustomerVehicle[]
+  bookings      Booking[]
+  serviceOrders ServiceOrder[]
+  serviceHistory ServiceHistory[]
+  invoices      Invoice[]
+  payments      Payment[]
+
+  @@index([status])
+  @@map("tenants")
+}
+
+model Branch {
+  id            String             @id @default(uuid())
+  tenantId      String             @map("tenant_id")
+  name          String
+  code          String
+  status        String             @default("ACTIVE")
+  address       String?
+  phone         String?
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  users         User[]
+  customers     Customer[]
+  serviceCategories ServiceCategory[]
+  serviceCatalogs ServiceCatalog[]
+  sparepartCategories SparepartCategory[]
+  spareparts    Sparepart[]
+  stockMovements StockMovement[]
+  vehicles      CustomerVehicle[]
+  bookings      Booking[]
+  serviceOrders ServiceOrder[]
+  serviceHistory ServiceHistory[]
+  invoices      Invoice[]
+  payments      Payment[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([status])
+  @@map("branches")
+}
+
+model SubscriptionPlan {
+  id             String               @id @default(uuid())
+  name           String
+  code           String               @unique
+  priceMonthly   Int                  @default(0) @map("price_monthly")
+  maxBranches    Int?                 @map("max_branches")
+  maxUsers       Int?                 @map("max_users")
+  features       String?
+  isActive       Boolean              @default(true) @map("is_active")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  subscriptions  TenantSubscription[]
+
+  @@index([isActive])
+  @@map("subscription_plans")
+}
+
+model TenantSubscription {
+  id        String           @id @default(uuid())
+  tenantId  String           @map("tenant_id")
+  planId    String           @map("plan_id")
+  status    String           @default("TRIAL")
+  startedAt DateTime         @default(now()) @map("started_at")
+  endsAt    DateTime?        @map("ends_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@index([planId])
+  @@index([status])
+  @@map("tenant_subscriptions")
 }
 
 model Role {
@@ -46,6 +148,8 @@ model UserRole {
 
 model Customer {
   id              String           @id @default(uuid())
+  tenantId        String?          @map("tenant_id")
+  branchId        String?          @map("branch_id")
   userId          String           @unique @map("user_id")
   name            String
   phone           String           @unique
@@ -56,9 +160,13 @@ model Customer {
   invoices        Invoice[]
   serviceHistory  ServiceHistory[]
   serviceOrders   ServiceOrder[]
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  branch          Branch?          @relation(fields: [branchId], references: [id])
   user            User             @relation(fields: [userId], references: [id])
   vehicles        CustomerVehicle[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@map("customers")
 }
 
@@ -75,17 +183,25 @@ model RefreshToken {
 
 model ServiceCategory {
   id        String           @id @default(uuid())
+  tenantId  String?          @map("tenant_id")
+  branchId  String?          @map("branch_id")
   name      String
   isActive  Boolean          @default(true) @map("is_active")
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
+  tenant    Tenant?          @relation(fields: [tenantId], references: [id])
+  branch    Branch?          @relation(fields: [branchId], references: [id])
   services  ServiceCatalog[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@map("service_categories")
 }
 
 model ServiceCatalog {
   id                       String          @id @default(uuid())
+  tenantId                 String?         @map("tenant_id")
+  branchId                 String?         @map("branch_id")
   categoryId               String          @map("category_id")
   name                     String
   slug                     String          @unique
@@ -96,8 +212,12 @@ model ServiceCatalog {
   isActive                 Boolean         @default(true) @map("is_active")
   createdAt                DateTime        @default(now()) @map("created_at")
   updatedAt                DateTime        @updatedAt @map("updated_at")
+  tenant                   Tenant?         @relation(fields: [tenantId], references: [id])
+  branch                   Branch?         @relation(fields: [branchId], references: [id])
   category                 ServiceCategory @relation(fields: [categoryId], references: [id])
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([categoryId])
   @@index([vehicleType])
   @@map("service_catalogs")
@@ -105,17 +225,25 @@ model ServiceCatalog {
 
 model SparepartCategory {
   id         String      @id @default(uuid())
+  tenantId   String?     @map("tenant_id")
+  branchId   String?     @map("branch_id")
   name       String
   isActive   Boolean     @default(true) @map("is_active")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")
+  tenant     Tenant?     @relation(fields: [tenantId], references: [id])
+  branch     Branch?     @relation(fields: [branchId], references: [id])
   spareparts Sparepart[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@map("sparepart_categories")
 }
 
 model Sparepart {
   id          String            @id @default(uuid())
+  tenantId    String?           @map("tenant_id")
+  branchId    String?           @map("branch_id")
   categoryId  String            @map("category_id")
   name        String
   sku         String            @unique
@@ -129,9 +257,13 @@ model Sparepart {
   isActive    Boolean           @default(true) @map("is_active")
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
+  tenant      Tenant?           @relation(fields: [tenantId], references: [id])
+  branch      Branch?           @relation(fields: [branchId], references: [id])
   category    SparepartCategory @relation(fields: [categoryId], references: [id])
   stockMovements StockMovement[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([categoryId])
   @@index([brand])
   @@map("spareparts")
@@ -139,6 +271,8 @@ model Sparepart {
 
 model StockMovement {
   id            String    @id @default(uuid())
+  tenantId      String?   @map("tenant_id")
+  branchId      String?   @map("branch_id")
   sparepartId   String    @map("sparepart_id")
   type          String
   quantity      Int
@@ -149,9 +283,13 @@ model StockMovement {
   referenceId   String?   @map("reference_id")
   createdById   String?   @map("created_by")
   createdAt     DateTime  @default(now()) @map("created_at")
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+  branch        Branch?   @relation(fields: [branchId], references: [id])
   createdBy     User?     @relation("StockMovementCreator", fields: [createdById], references: [id])
   sparepart     Sparepart @relation(fields: [sparepartId], references: [id])
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([sparepartId])
   @@index([createdById])
   @@index([type])
@@ -161,6 +299,8 @@ model StockMovement {
 
 model CustomerVehicle {
   id          String           @id @default(uuid())
+  tenantId    String?          @map("tenant_id")
+  branchId    String?          @map("branch_id")
   customerId  String           @map("customer_id")
   plateNumber String           @map("plate_number")
   brand       String
@@ -173,10 +313,14 @@ model CustomerVehicle {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
   bookings    Booking[]
+  tenant      Tenant?          @relation(fields: [tenantId], references: [id])
+  branch      Branch?          @relation(fields: [branchId], references: [id])
   customer    Customer         @relation(fields: [customerId], references: [id])
   histories   ServiceHistory[]
   serviceOrders ServiceOrder[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([customerId])
   @@index([plateNumber])
   @@map("customer_vehicles")
@@ -184,6 +328,8 @@ model CustomerVehicle {
 
 model Booking {
   id          String           @id @default(uuid())
+  tenantId    String?          @map("tenant_id")
+  branchId    String?          @map("branch_id")
   customerId  String           @map("customer_id")
   vehicleId   String?          @map("vehicle_id")
   code        String           @unique
@@ -193,9 +339,13 @@ model Booking {
   notes       String?
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
+  tenant      Tenant?          @relation(fields: [tenantId], references: [id])
+  branch      Branch?          @relation(fields: [branchId], references: [id])
   customer    Customer         @relation(fields: [customerId], references: [id])
   vehicle     CustomerVehicle? @relation(fields: [vehicleId], references: [id])
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([customerId])
   @@index([vehicleId])
   @@index([status])
@@ -204,6 +354,8 @@ model Booking {
 
 model ServiceOrder {
   id                  String           @id @default(uuid())
+  tenantId            String?          @map("tenant_id")
+  branchId            String?          @map("branch_id")
   customerId          String           @map("customer_id")
   vehicleId           String?          @map("vehicle_id")
   mechanicId          String?          @map("mechanic_id")
@@ -223,6 +375,8 @@ model ServiceOrder {
   grandTotal          Int              @default(0) @map("grand_total")
   createdAt           DateTime         @default(now()) @map("created_at")
   updatedAt           DateTime         @updatedAt @map("updated_at")
+  tenant              Tenant?          @relation(fields: [tenantId], references: [id])
+  branch              Branch?          @relation(fields: [branchId], references: [id])
   customer            Customer         @relation(fields: [customerId], references: [id])
   mechanic            User?            @relation("MechanicServiceOrders", fields: [mechanicId], references: [id])
   vehicle             CustomerVehicle? @relation(fields: [vehicleId], references: [id])
@@ -233,6 +387,8 @@ model ServiceOrder {
   sparepartItems      ServiceOrderSparepartItem[]
   invoice             Invoice?
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([customerId])
   @@index([vehicleId])
   @@index([mechanicId])
@@ -322,6 +478,8 @@ model ServiceOrderChecklist {
 
 model ServiceHistory {
   id          String           @id @default(uuid())
+  tenantId    String?          @map("tenant_id")
+  branchId    String?          @map("branch_id")
   customerId  String           @map("customer_id")
   vehicleId   String?          @map("vehicle_id")
   serviceName String           @map("service_name")
@@ -330,9 +488,13 @@ model ServiceHistory {
   totalPrice  Int              @map("total_price")
   notes       String?
   createdAt   DateTime         @default(now()) @map("created_at")
+  tenant      Tenant?          @relation(fields: [tenantId], references: [id])
+  branch      Branch?          @relation(fields: [branchId], references: [id])
   customer    Customer         @relation(fields: [customerId], references: [id])
   vehicle     CustomerVehicle? @relation(fields: [vehicleId], references: [id])
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([customerId])
   @@index([vehicleId])
   @@map("service_history")
@@ -340,6 +502,8 @@ model ServiceHistory {
 
 model Invoice {
   id             String        @id @default(uuid())
+  tenantId       String?       @map("tenant_id")
+  branchId       String?       @map("branch_id")
   customerId     String        @map("customer_id")
   serviceOrderId String?       @unique @map("service_order_id")
   invoiceNumber  String        @unique @map("invoice_number")
@@ -352,11 +516,15 @@ model Invoice {
   paidAt         DateTime?     @map("paid_at")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
+  tenant         Tenant?       @relation(fields: [tenantId], references: [id])
+  branch         Branch?       @relation(fields: [branchId], references: [id])
   customer       Customer      @relation(fields: [customerId], references: [id])
   serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id])
   items          InvoiceItem[]
   payments       Payment[]
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([customerId])
   @@index([status])
   @@map("invoices")
@@ -380,6 +548,8 @@ model InvoiceItem {
 
 model Payment {
   id               String   @id @default(uuid())
+  tenantId         String?  @map("tenant_id")
+  branchId         String?  @map("branch_id")
   invoiceId         String   @map("invoice_id")
   paymentNumber     String   @unique @map("payment_number")
   amount            Int
@@ -390,8 +560,12 @@ model Payment {
   note              String?
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
+  tenant            Tenant?  @relation(fields: [tenantId], references: [id])
+  branch            Branch?  @relation(fields: [branchId], references: [id])
   invoice           Invoice  @relation(fields: [invoiceId], references: [id])
 
+  @@index([tenantId])
+  @@index([branchId])
   @@index([invoiceId])
   @@index([status])
   @@map("payments")
