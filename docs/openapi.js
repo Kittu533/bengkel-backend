@@ -2,7 +2,7 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.5.0",
+    version: "1.6.0",
     description:
       "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, admin dashboard, dan super admin audit.",
   },
@@ -418,6 +418,8 @@ const openApiSpec = {
           queryParam("action"),
           queryParam("entityType"),
           queryParam("actorId"),
+          queryParam("dateFrom"),
+          queryParam("dateTo"),
           queryParam("page", "integer"),
           queryParam("limit", "integer"),
         ],
@@ -438,6 +440,30 @@ const openApiSpec = {
                     meta: { type: "object" },
                   },
                 },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/super-admin/audit-logs/export.csv": {
+      get: {
+        ...protectedOperation("Super Admin", "Export audit logs as CSV"),
+        parameters: [
+          queryParam("search"),
+          queryParam("action"),
+          queryParam("entityType"),
+          queryParam("actorId"),
+          queryParam("dateFrom"),
+          queryParam("dateTo"),
+          queryParam("limit", "integer"),
+        ],
+        responses: {
+          200: {
+            description: "CSV export",
+            content: {
+              "text/csv": {
+                schema: { type: "string" },
               },
             },
           },

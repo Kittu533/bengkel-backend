@@ -17,6 +17,11 @@ router.post("/plans", superAdminOnly, superAdminController.createPlan);
 router.patch("/plans/:id", superAdminOnly, superAdminController.updatePlan);
 router.delete("/plans/:id", superAdminOnly, superAdminController.deletePlan);
 
+router.get(
+  "/audit-logs/export.csv",
+  superAdminOnly,
+  superAdminController.exportAuditLogsCsv
+);
 router.get("/audit-logs", superAdminOnly, superAdminController.auditLogs);
 
 module.exports = router;

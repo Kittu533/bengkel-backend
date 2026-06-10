@@ -1,5 +1,9 @@
 const superAdminService = require("../services/superAdminService");
-const { listAuditLogs, recordAuditLog } = require("../services/auditLogService");
+const {
+  exportAuditLogs,
+  listAuditLogs,
+  recordAuditLog,
+} = require("../services/auditLogService");
 const { sendSuccess } = require("../utils/response");
 const {
   validateCreatePlan,
@@ -15,6 +19,43 @@ function sendPaginated(res, message, result) {
     data: result.data,
     meta: result.meta,
   });
+}
+
+function csvValue(value) {
+  if (value === null || value === undefined) return "";
+  const stringValue =
+    typeof value === "object" ? JSON.stringify(value) : String(value);
+  return `"${stringValue.replaceAll('"', '""')}"`;
+}
+
+function auditLogsToCsv(logs) {
+  const headers = [
+    "createdAt",
+    "action",
+    "entityType",
+    "entityId",
+    "actorName",
+    "actorEmail",
+    "ipAddress",
+    "requestId",
+    "metadata",
+  ];
+  const rows = logs.map((log) => [
+    log.createdAt,
+    log.action,
+    log.entityType,
+    log.entityId,
+    log.actor?.name,
+    log.actor?.email,
+    log.ipAddress,
+    log.requestId,
+    log.metadata,
+  ]);
+
+  return [
+    headers.map(csvValue).join(","),
+    ...rows.map((row) => row.map(csvValue).join(",")),
+  ].join("\n");
 }
 
 async function listTenants(req, res, next) {
@@ -147,6 +188,20 @@ async function auditLogs(req, res, next) {
   }
 }
 
+async function exportAuditLogsCsv(req, res, next) {
+  try {
+    const logs = await exportAuditLogs(req.query);
+    const csv = auditLogsToCsv(logs);
+    const filename = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.status(200).send(csv);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   listTenants,
   createTenant,
@@ -158,4 +213,5 @@ module.exports = {
   updatePlan,
   deletePlan,
   auditLogs,
+  exportAuditLogsCsv,
 };

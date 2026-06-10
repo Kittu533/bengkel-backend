@@ -4,6 +4,10 @@ function listAuditLogs(query) {
   return auditLogRepository.listAuditLogs(query);
 }
 
+function exportAuditLogs(query) {
+  return auditLogRepository.exportAuditLogs(query);
+}
+
 async function recordAuditLog(req, payload) {
   try {
     return await auditLogRepository.createAuditLog({
@@ -28,6 +32,7 @@ async function recordAuditLog(req, payload) {
 }
 
 module.exports = {
+  exportAuditLogs,
   listAuditLogs,
   recordAuditLog,
 };
