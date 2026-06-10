@@ -64,6 +64,12 @@ const photoSchema = z.object({
   visibility: z.enum(visibilityValues).default("CUSTOMER_VISIBLE"),
 });
 
+const checklistSchema = z.object({
+  title: z.string().trim().min(3, "Checklist minimal 3 karakter"),
+  isDone: z.coerce.boolean().default(false),
+  note: z.string().trim().optional(),
+});
+
 function normalizeEmptyStrings(payload) {
   return Object.fromEntries(
     Object.entries(payload || {}).map(([key, value]) => [
@@ -120,4 +126,5 @@ module.exports = {
   validateSparepartItem: (payload) => validate(sparepartItemSchema, payload),
   validateNote: (payload) => validate(noteSchema, payload),
   validatePhoto: (payload) => validate(photoSchema, payload),
+  validateChecklist: (payload) => validate(checklistSchema, payload),
 };

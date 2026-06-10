@@ -41,6 +41,25 @@ function ensureStaff(user) {
   if (!isAllowed) throw new HttpError(403, "Role tidak memiliki akses");
 }
 
+function hasRole(user, role) {
+  return user.roles?.includes(role);
+}
+
+function isAssignedMechanicOnly(user, order) {
+  return (
+    hasRole(user, ROLES.MECHANIC) &&
+    !hasRole(user, ROLES.ADMIN) &&
+    !hasRole(user, ROLES.OWNER) &&
+    order.mechanicId !== user.id
+  );
+}
+
+function ensureMechanicAssignment(user, order) {
+  if (isAssignedMechanicOnly(user, order)) {
+    throw new HttpError(403, "Mekanik hanya bisa mengakses task miliknya");
+  }
+}
+
 function ensureAdmin(user) {
   if (!user.roles?.includes(ROLES.ADMIN)) {
     throw new HttpError(403, "Role tidak memiliki akses");
@@ -90,15 +109,23 @@ async function createServiceOrder(user, payload) {
 
 function listServiceOrders(user, query) {
   ensureStaff(user);
-  return serviceOrderRepository.listServiceOrders(query);
+  const scopedQuery =
+    hasRole(user, ROLES.MECHANIC) &&
+    !hasRole(user, ROLES.ADMIN) &&
+    !hasRole(user, ROLES.OWNER)
+      ? { ...query, mechanicId: user.id }
+      : query;
+  return serviceOrderRepository.listServiceOrders(scopedQuery);
 }
 
 async function getServiceOrder(user, id) {
   ensureStaff(user);
-  return ensureFound(
+  const order = ensureFound(
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
+  return order;
 }
 
 async function updateServiceOrder(user, id, payload) {
@@ -107,6 +134,7 @@ async function updateServiceOrder(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
   return serviceOrderRepository.updateServiceOrder(id, payload);
 }
@@ -117,6 +145,7 @@ async function updateStatus(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
 
   const nextStatuses = allowedTransitions[order.status] || [];
@@ -137,6 +166,7 @@ async function assignMechanic(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
   ensureFound(
     await serviceOrderRepository.findMechanic(payload.mechanicId),
@@ -165,6 +195,7 @@ async function addSparepartItem(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
   const sparepart = ensureFound(
     await serviceOrderRepository.findSparepart(payload.sparepartId),
@@ -187,6 +218,7 @@ async function addNote(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
   return serviceOrderRepository.addNote(id, user.id, payload);
 }
@@ -197,8 +229,20 @@ async function addPhoto(user, id, payload) {
     await serviceOrderRepository.getServiceOrder(id),
     "Service order tidak ditemukan"
   );
+  ensureMechanicAssignment(user, order);
   ensureEditable(order);
   return serviceOrderRepository.addPhoto(id, payload);
+}
+
+async function addChecklist(user, id, payload) {
+  ensureStaff(user);
+  const order = ensureFound(
+    await serviceOrderRepository.getServiceOrder(id),
+    "Service order tidak ditemukan"
+  );
+  ensureMechanicAssignment(user, order);
+  ensureEditable(order);
+  return serviceOrderRepository.addChecklist(id, user.id, payload);
 }
 
 async function completeServiceOrder(user, id) {
@@ -235,6 +279,7 @@ module.exports = {
   addSparepartItem,
   addNote,
   addPhoto,
+  addChecklist,
   completeServiceOrder,
   getCustomerTracking,
 };

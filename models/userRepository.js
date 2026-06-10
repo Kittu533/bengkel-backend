@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { DEFAULT_ADMIN, ROLES } = require("../config/auth");
+const { DEFAULT_ADMIN, DEFAULT_MECHANIC, ROLES } = require("../config/auth");
 const { getPrisma } = require("./prismaClient");
 const memoryStore = require("./userStore");
 
@@ -53,6 +53,34 @@ async function seedDefaultAdmin() {
       phone: DEFAULT_ADMIN.phone,
       passwordHash: bcrypt.hashSync(DEFAULT_ADMIN.password, 10),
       userRoles: { create: { roleId: adminRole.id } },
+    },
+    include: { userRoles: { include: { role: true } } },
+  });
+
+  return prismaUserToDomain(user);
+}
+
+async function seedDefaultMechanic() {
+  if (useMemoryStore()) return null;
+
+  const prisma = getPrisma();
+  const email = DEFAULT_MECHANIC.email.toLowerCase();
+  const existingMechanic = await prisma.user.findUnique({ where: { email } });
+  if (existingMechanic) return null;
+
+  const mechanicRole = await prisma.role.upsert({
+    where: { name: ROLES.MECHANIC },
+    update: {},
+    create: { name: ROLES.MECHANIC },
+  });
+
+  const user = await prisma.user.create({
+    data: {
+      name: DEFAULT_MECHANIC.name,
+      email,
+      phone: DEFAULT_MECHANIC.phone,
+      passwordHash: bcrypt.hashSync(DEFAULT_MECHANIC.password, 10),
+      userRoles: { create: { roleId: mechanicRole.id } },
     },
     include: { userRoles: { include: { role: true } } },
   });
@@ -164,6 +192,7 @@ async function setUserStatus(email, status) {
 module.exports = {
   seedRoles,
   seedDefaultAdmin,
+  seedDefaultMechanic,
   createCustomerUser,
   findUserByEmail,
   findUserByPhone,

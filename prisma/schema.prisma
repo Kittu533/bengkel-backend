@@ -19,6 +19,7 @@ model User {
   refreshToken RefreshToken[]
   assignedServiceOrders ServiceOrder[] @relation("MechanicServiceOrders")
   serviceOrderNotes ServiceOrderNote[]
+  serviceOrderChecklists ServiceOrderChecklist[]
   stockMovements StockMovement[] @relation("StockMovementCreator")
   userRoles    UserRole[]
 
@@ -227,6 +228,7 @@ model ServiceOrder {
   vehicle             CustomerVehicle? @relation(fields: [vehicleId], references: [id])
   notes               ServiceOrderNote[]
   photos              ServiceOrderPhoto[]
+  checklists          ServiceOrderChecklist[]
   serviceItems        ServiceOrderServiceItem[]
   sparepartItems      ServiceOrderSparepartItem[]
   invoice             Invoice?
@@ -298,6 +300,24 @@ model ServiceOrderPhoto {
   @@index([serviceOrderId])
   @@index([visibility])
   @@map("service_order_photos")
+}
+
+model ServiceOrderChecklist {
+  id             String       @id @default(uuid())
+  serviceOrderId String       @map("service_order_id")
+  userId         String       @map("user_id")
+  title          String
+  isDone         Boolean      @default(false) @map("is_done")
+  note           String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([serviceOrderId])
+  @@index([userId])
+  @@index([isDone])
+  @@map("service_order_checklists")
 }
 
 model ServiceHistory {

@@ -2,9 +2,9 @@ const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "BengkelPro API",
-    version: "1.1.0",
+    version: "1.2.0",
     description:
-      "API contract untuk auth, public catalog, customer area, booking, service order, dan admin dashboard.",
+      "API contract untuk auth, public catalog, customer area, booking, service order, mechanic workspace, invoice, dan admin dashboard.",
   },
   servers: [{ url: "/api", description: "Current API host" }],
   tags: [
@@ -14,6 +14,7 @@ const openApiSpec = {
     { name: "Customer" },
     { name: "Booking" },
     { name: "Service Order" },
+    { name: "Mechanic" },
     { name: "Inventory" },
     { name: "Invoice" },
     { name: "Payment" },
@@ -183,6 +184,15 @@ const openApiSpec = {
           url: { type: "string", format: "uri" },
           caption: { type: "string" },
           visibility: { type: "string", enum: ["INTERNAL", "CUSTOMER_VISIBLE"] },
+        },
+      },
+      ServiceOrderChecklistRequest: {
+        type: "object",
+        required: ["title"],
+        properties: {
+          title: { type: "string", minLength: 3 },
+          isDone: { type: "boolean", default: false },
+          note: { type: "string" },
         },
       },
       StockAdjustmentRequest: {
@@ -445,6 +455,44 @@ const openApiSpec = {
     },
     "/service-orders/{id}/complete": {
       patch: protectedOperation("Service Order", "Complete service order"),
+    },
+    "/mechanic/tasks": {
+      get: {
+        ...protectedOperation("Mechanic", "List assigned mechanic tasks"),
+        parameters: [
+          queryParam("search"),
+          queryParam("status"),
+          queryParam("page", "integer"),
+          queryParam("limit", "integer"),
+        ],
+      },
+    },
+    "/mechanic/tasks/{id}": {
+      get: protectedOperation("Mechanic", "Get mechanic task detail"),
+    },
+    "/mechanic/tasks/{id}/status": {
+      patch: {
+        ...protectedOperation("Mechanic", "Update mechanic task status"),
+        requestBody: jsonBody("ServiceOrderStatusRequest"),
+      },
+    },
+    "/mechanic/tasks/{id}/notes": {
+      post: {
+        ...protectedOperation("Mechanic", "Add mechanic note"),
+        requestBody: jsonBody("ServiceOrderNoteRequest"),
+      },
+    },
+    "/mechanic/tasks/{id}/photos": {
+      post: {
+        ...protectedOperation("Mechanic", "Add mechanic progress photo"),
+        requestBody: jsonBody("ServiceOrderPhotoRequest"),
+      },
+    },
+    "/mechanic/tasks/{id}/checklist": {
+      post: {
+        ...protectedOperation("Mechanic", "Add mechanic checklist item"),
+        requestBody: jsonBody("ServiceOrderChecklistRequest"),
+      },
     },
     "/customer/service-history": protectedGet(
       "Customer",

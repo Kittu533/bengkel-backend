@@ -55,6 +55,10 @@ function includeDetail(customerVisibleOnly = false) {
       where: customerVisibleOnly ? { visibility: "CUSTOMER_VISIBLE" } : {},
       orderBy: { createdAt: "asc" },
     },
+    checklists: {
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    },
   };
 }
 
@@ -278,6 +282,21 @@ async function addPhoto(id, payload) {
   return serialize(photo);
 }
 
+async function addChecklist(id, userId, payload) {
+  const prisma = getPrisma();
+  const checklist = await prisma.serviceOrderChecklist.create({
+    data: {
+      serviceOrderId: id,
+      userId,
+      title: payload.title,
+      isDone: payload.isDone,
+      note: payload.note || null,
+    },
+    include: { user: true },
+  });
+  return serialize(checklist);
+}
+
 async function findSparepart(id) {
   const prisma = getPrisma();
   return prisma.sparepart.findFirst({ where: { id, isActive: true } });
@@ -366,6 +385,7 @@ module.exports = {
   addSparepartItem,
   addNote,
   addPhoto,
+  addChecklist,
   completeServiceOrder,
   getCustomerTracking,
 };

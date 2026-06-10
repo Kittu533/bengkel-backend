@@ -16,6 +16,7 @@ const bookingRoutes = require("./routes/bookingRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const docsRoutes = require("./routes/docsRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
+const mechanicRoutes = require("./routes/mechanicRoutes");
 const publicCatalogRoutes = require("./routes/publicCatalogRoutes");
 const serviceOrderRoutes = require("./routes/serviceOrderRoutes");
 const { sendSuccess } = require("./utils/response");
@@ -29,6 +30,7 @@ const allowedCorsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
 const boot = Promise.all([
   userRepository.seedRoles(),
   userRepository.seedDefaultAdmin(),
+  userRepository.seedDefaultMechanic(),
   publicCatalogRepository.seedPublicCatalogs(),
 ]);
 
@@ -64,6 +66,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/public", publicCatalogRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/mechanic", mechanicRoutes);
 app.use("/api/service-orders", serviceOrderRoutes);
 app.use("/api", invoiceRoutes);
 app.use("/api/customer", customerRoutes);
